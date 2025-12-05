@@ -4,6 +4,7 @@ from typing import Callable
 import numpy as np
 import torch
 from torch import Tensor
+from numpy.typing import NDArray
 
 
 class OnlinePredictor:
@@ -19,7 +20,7 @@ class OnlinePredictor:
         self._q_t: Tensor | None = None
         self._batch_shape: tuple[int, ...] | None = None
 
-    def getLogits(self, states: np.ndarray) -> np.ndarray:
+    def getLogits(self, states: np.ndarray) -> NDArray[np.float32]:
         states = np.asarray(states, dtype=np.float32, order="C")
 
         if self._batch_shape != states.shape:

@@ -4,8 +4,10 @@ from typing import Optional
 
 import numpy as np
 
+from dqn.policies.policy_base import Policy
 
-class EpsilonGreedyPolicy:
+
+class EpsilonGreedyPolicy(Policy):
     """
     Epsilon-greedy policy over provided Q-values. Uses greedy argmax with
     probability (1 - epsilon) and a random action with probability epsilon.
@@ -15,6 +17,7 @@ class EpsilonGreedyPolicy:
     def __init__(self, epsilon: float = 0.1, seed: Optional[int] = None) -> None:
         if not 0.0 <= epsilon <= 1.0:
             raise ValueError("epsilon must be in [0, 1]")
+        super().__init__(seed=seed)
         self.epsilon = float(epsilon)
         self.rng = np.random.default_rng(seed)
 

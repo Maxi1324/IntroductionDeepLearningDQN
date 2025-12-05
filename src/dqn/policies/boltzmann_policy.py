@@ -4,8 +4,10 @@ from typing import Optional
 
 import numpy as np
 
+from dqn.policies.policy_base import Policy
 
-class BoltzmannPolicy:
+
+class BoltzmannPolicy(Policy):
     """
     Samples actions according to a Boltzmann/softmax distribution over Q-values.
     Expects Q-values already computed (e.g., by OnlinePredictor) and returns int32 actions.
@@ -14,6 +16,7 @@ class BoltzmannPolicy:
     def __init__(self, temperature: float = 1.0, seed: Optional[int] = None) -> None:
         if temperature <= 0:
             raise ValueError("temperature must be > 0")
+        super().__init__(seed=seed)
         self.temperature = float(temperature)
         self.rng = np.random.default_rng(seed)
 
