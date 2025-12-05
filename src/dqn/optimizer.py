@@ -6,13 +6,14 @@ import torch
 from torch import nn
 
 from dqn.parameter import Parameter
+from dqn.networks import get_model
 
 
 class Optimizer:
     def __init__(self, param: Parameter) -> None:
         self.param: Parameter = param
 
-        self.online_network: nn.Module = param.Network()
+        self.online_network: nn.Module = get_model(param.Network)
         self.target_network: nn.Module = copy.deepcopy(self.online_network)
 
         device = torch.device(param.Device)

@@ -1,17 +1,14 @@
 from dataclasses import dataclass
-from typing import Type, Union, Callable
+from typing import Any, Optional
 
-import torch
-from torch import nn
-
-from dqn.policies.policy_base import Policy
+from dataclasses import dataclass
 
 
 @dataclass
 class Parameter:
-    Device: torch.device
-    Network: nn.Module
-    Policy: Policy
+    Device: str
+    Network: str
+    Policy: str
     env: str
     envsCount: int
     learningRate: float
@@ -21,4 +18,6 @@ class Parameter:
     epochs: int
     optimizationPerEpoch: int
     batchSize: int
-    prewarm:int
+    prewarm: int
+    name: str
+    epsilon: Optional[float] = None

@@ -182,3 +182,7 @@ __marimo__/
 # Test outputs / temporary files
 tests/__pycache__/
 tests/output/
+
+
+src/mlruns/*
+mlflow.db

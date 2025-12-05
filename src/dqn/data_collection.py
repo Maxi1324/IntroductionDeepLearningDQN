@@ -34,8 +34,13 @@ class DataCollect:
 
         states, _ = self.env.reset()
         self._states: NDArray[np.float32] = np.asarray(states, dtype=np.float32)
+        self._ep_len: NDArray[np.int32] = np.zeros(env_count, dtype=np.int32)
+        self._ep_return: NDArray[np.float32] = np.zeros(env_count, dtype=np.float32)
 
-    def collect(self, num_steps: int) -> None:
+    def collect(self, num_steps: int) -> tuple[float | None, float | None]:
+        completed_lengths: list[int] = []
+        completed_returns: list[float] = []
+
         for _ in range(num_steps):
             states = self._states
 
@@ -45,6 +50,16 @@ class DataCollect:
             next_states = next_states.astype(np.float32)
             rewards = rewards.astype(np.float32)
             dones = np.logical_or(terminated, truncated)
+
+            # Track episode stats
+            self._ep_len += 1
+            self._ep_return += rewards
+            if dones.any():
+                done_mask = dones
+                completed_lengths.extend(self._ep_len[done_mask].tolist())
+                completed_returns.extend(self._ep_return[done_mask].tolist())
+                self._ep_len[done_mask] = 0
+                self._ep_return[done_mask] = 0.0
 
             assert isinstance(states, np.ndarray) and states.dtype == np.float32
             assert isinstance(next_states, np.ndarray) and next_states.dtype == np.float32
@@ -61,3 +76,7 @@ class DataCollect:
             )
 
             self._states = next_states
+
+        avg_len = float(np.mean(completed_lengths)) if completed_lengths else None
+        avg_ret = float(np.mean(completed_returns)) if completed_returns else None
+        return avg_len, avg_ret

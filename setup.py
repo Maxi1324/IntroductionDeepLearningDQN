@@ -9,6 +9,7 @@ setup(
     install_requires=[
         "torch",
         "gymnasium",
-        "tensorboard",
+        "mlflow",
+        "gymnasium[classic-control]"
     ],
 )

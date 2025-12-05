@@ -6,12 +6,19 @@ import gymnasium as gym
 from gymnasium import spaces
 import torch
 
-from src.dqn.utils.parameter import Parameter
+from dqn.utils.parameter import Parameter
 from dqn.data_collection import DataCollect
 from dqn.optimizer import Optimizer
+from dqn.policies.policy_base import Policy
 
 
-def validate_configuration(param: Parameter, data_collection: DataCollect, optimizer: Optimizer) -> None:
+def validate_configuration(
+    param: Parameter,
+    data_collection: DataCollect,
+    optimizer: Optimizer,
+    policy: Policy,
+    device: torch.device,
+) -> None:
     """
     Validate that parameters, environment, and network dimensions are consistent.
     Exits the program with a short English message on failure.
@@ -23,8 +30,8 @@ def validate_configuration(param: Parameter, data_collection: DataCollect, optim
         print(f"Configuration error: {msg}")
         raise SystemExit(1)
 
-    if not callable(p.Network):
-        fail("Network must be a callable/constructor.")
+    if not isinstance(p.Network, str) or not p.Network:
+        fail("Network must be a non-empty string key.")
     if p.learningRate <= 0:
         fail("learningRate must be > 0.")
     if not (0.0 <= p.discount <= 1.0):
@@ -37,11 +44,17 @@ def validate_configuration(param: Parameter, data_collection: DataCollect, optim
         fail("collectSteps must be > 0.")
     if p.prewarm < p.batchSize:
         fail("prewarm must be >= batchSize for sampling.")
+    if not isinstance(p.Device, str) or not p.Device:
+        fail("Device must be a non-empty string.")
     if p.envsCount <= 0:
         fail("envsCount must be > 0.")
     if not p.env:
         fail("env id must be set.")
-    if p.Policy.online_predictor is None:
+    if not isinstance(p.Policy, str) or not p.Policy:
+        fail("Policy must be a non-empty string key.")
+    if p.Policy.lower() == "epsilon_greedy" and p.epsilon is None:
+        fail("epsilon must be set for epsilon_greedy policy.")
+    if policy.online_predictor is None:
         fail("Policy has no OnlinePredictor attached.")
 
     env_single: Optional[gym.Env[Any, Any]] = None
@@ -69,7 +82,7 @@ def validate_configuration(param: Parameter, data_collection: DataCollect, optim
         if states_np.shape != expected_shape:
             fail(f"Env reset states shape {states_np.shape} does not match expected {expected_shape}.")
 
-        states_t = torch.as_tensor(states_np, device=p.Device, dtype=torch.float32)
+        states_t = torch.as_tensor(states_np, device=device, dtype=torch.float32)
         with torch.no_grad():
             logits = optimizer.online_network(states_t)
         if logits.ndim < 2:
