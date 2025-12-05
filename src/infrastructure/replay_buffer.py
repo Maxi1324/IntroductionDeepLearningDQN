@@ -9,6 +9,7 @@ from torch import Tensor
 
 
 class ReplayBuffer:
+    """Cyclic replay buffer that stores transitions in numpy arrays and returns Torch tensors on demand."""
     def __init__(self, capacity: int, device: Optional[torch.device] = None) -> None:
         self.capacity = capacity
         self.device = device
@@ -59,6 +60,22 @@ class ReplayBuffer:
         rewards: NDArray[np.float32],
         dones: NDArray[np.bool_],
     ) -> None:
+        """
+        Append a batch of transitions to the buffer (overwrites old data when full).
+
+        Parameters
+        ----------
+        states: float32 array shaped [batch, *state_shape]
+            Current observations.
+        next_states: float32 array shaped [batch, *state_shape]
+            Observations after executing actions.
+        actions: int64 array shaped [batch] or [batch, ...]
+            Actions taken.
+        rewards: float32 array shaped [batch]
+            Scalar rewards.
+        dones: bool array shaped [batch]
+            Episode done flags (True if next state is terminal).
+        """
         added = states.shape[0]
         if added > self.capacity:
             raise ValueError(f"Batch size {added} exceeds capacity {self.capacity}")
@@ -133,6 +150,20 @@ class ReplayBuffer:
     def sample(
         self, batch_size: int
     ) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
+        """
+        Uniformly sample a batch of transitions.
+
+        Returns
+        -------
+        states: Tensor
+        actions: Tensor
+        rewards: Tensor
+        next_states: Tensor
+        dones: Tensor (bool)
+
+        Tensors are placed on `self.device` (if set) or stay on CPU. Raises ValueError
+        if fewer than `batch_size` samples are stored.
+        """
         if self._size < batch_size:
             raise ValueError(f"Not enough samples: have {self._size}, need {batch_size}")
 
