@@ -19,7 +19,7 @@ class ReplayBuffer:
         # Main storage
         self.states: Optional[NDArray[np.float32]] = None
         self.next_states: Optional[NDArray[np.float32]] = None
-        self.actions: Optional[NDArray[np.int64]] = None
+        self.actions: Optional[NDArray[np.int32]] = None
         self.rewards: Optional[NDArray[np.float32]] = None
         self.dones: Optional[NDArray[np.bool_]] = None
 
@@ -48,7 +48,7 @@ class ReplayBuffer:
     def _init_buffer(self, state_shape: Tuple[int, ...]) -> None:
         self.states = np.zeros((self.capacity, *state_shape), dtype=np.float32)
         self.next_states = np.zeros_like(self.states, dtype=np.float32)
-        self.actions = np.zeros((self.capacity,), dtype=np.int64)
+        self.actions = np.zeros((self.capacity,), dtype=np.int32)
         self.rewards = np.zeros((self.capacity,), dtype=np.float32)
         self.dones = np.zeros((self.capacity,), dtype=np.bool_)
 
@@ -56,7 +56,7 @@ class ReplayBuffer:
         self,
         states: NDArray[np.float32],
         next_states: NDArray[np.float32],
-        actions: NDArray[np.int64],
+        actions: NDArray[np.int32],
         rewards: NDArray[np.float32],
         dones: NDArray[np.bool_],
     ) -> None:
@@ -69,7 +69,7 @@ class ReplayBuffer:
             Current observations.
         next_states: float32 array shaped [batch, *state_shape]
             Observations after executing actions.
-        actions: int64 array shaped [batch] or [batch, ...]
+        actions: int32 array shaped [batch] or [batch, ...]
             Actions taken.
         rewards: float32 array shaped [batch]
             Scalar rewards.

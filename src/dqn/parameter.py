@@ -21,3 +21,4 @@ class Parameter:
     epochs: int
     optimizationPerEpoch: int
     batchSize: int
+    prewarm:int

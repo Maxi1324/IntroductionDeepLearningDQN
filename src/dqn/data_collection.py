@@ -39,7 +39,7 @@ class DataCollect:
         for _ in range(num_steps):
             states = self._states
 
-            actions = self.policy.policy(states)
+            actions = self.policy.getAction(states)
             next_states, rewards, terminated, truncated, _ = self.env.step(actions)
 
             next_states = next_states.astype(np.float32)
