@@ -12,13 +12,15 @@ from dqn.policies import get_policy
 
 
 class Agent:
-    def __init__(self, param: Parameter) -> None:
+    def __init__(self, param: Parameter, consoleLogging=True) -> None:
         self.param = param
         self.device = torch.device(param.Device)
 
         policy_kwargs = {}
         if param.Policy.lower() == "epsilon_greedy" and param.epsilon is not None:
             policy_kwargs["epsilon"] = param.epsilon
+        if param.seed is not None:
+            policy_kwargs["seed"] = param.seed
         policy_instance = get_policy(param.Policy, **policy_kwargs)
         self.replayBuffer: ReplayBuffer = ReplayBuffer(param.replayBufferSize, self.device)
         self.dataCollection: DataCollect = DataCollect(param.env, param.envsCount, self.replayBuffer, policy_instance)
@@ -27,7 +29,7 @@ class Agent:
         policy_instance.setOnlinePredictor(onlinePredictor)
         self.policy = policy_instance
         validate_configuration(self.param, self.dataCollection, self.optimizer, self.policy, self.device)
-        self.logger = TrainingLogger(run_name=getattr(param, "name", "dqn-run"))
+        self.logger = TrainingLogger(run_name=getattr(param, "name", "dqn-run"), consoleLogging=consoleLogging)
 
     def train(self) -> None:
         with self.logger.start_run():

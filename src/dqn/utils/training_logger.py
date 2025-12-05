@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from typing import Any, Dict, Optional
+import time
+import logging
 
 import mlflow
 
@@ -9,22 +11,40 @@ import mlflow
 class TrainingLogger:
     """Thin wrapper around MLflow logging so Agent stays clean."""
 
-    def __init__(self, run_name: str = "dqn-run", tracking_uri: str = "file:mlruns") -> None:
+    def __init__(
+        self,
+        run_name: str = "dqn-run",
+        tracking_uri: str = "sqlite:///mlflow.db",
+        consoleLogging: bool = False,
+    ) -> None:
         self.run_name = run_name
         self.tracking_uri = tracking_uri
         self._active: bool = False
         self._epoch_losses: list[float] = []
         self._current_epoch: Optional[int] = None
         self._total_epochs: Optional[int] = None
+        self.consoleLogging = consoleLogging
+        self._run_start: Optional[float] = None
+        self._quiet_logs_configured = False
 
     @contextmanager
     def start_run(self):
+        if not self._quiet_logs_configured:
+            # Silence noisy DB/table creation info logs from mlflow/alembic
+            logging.getLogger("mlflow").setLevel(logging.ERROR)
+            logging.getLogger("alembic").setLevel(logging.ERROR)
+            self._quiet_logs_configured = True
         mlflow.set_tracking_uri(self.tracking_uri)
         with mlflow.start_run(run_name=self.run_name):
             self._active = True
+            self._run_start = time.perf_counter()
             try:
                 yield
             finally:
+                if self._run_start is not None:
+                    duration = time.perf_counter() - self._run_start
+                    mlflow.log_metric("run_duration_seconds", duration)
+                    self._run_start = None
                 self._active = False
 
     def log_params(self, params: Dict[str, Any]) -> None:
@@ -50,6 +70,7 @@ class TrainingLogger:
             "network": getattr(param, "Network", None),
             "policy": getattr(param, "Policy", None),
             "epsilon": getattr(param, "epsilon", None),
+            "seed": getattr(param, "seed", None),
             "run_name": getattr(param, "name", None),
         }
         self.log_params(params)
@@ -86,4 +107,5 @@ class TrainingLogger:
             self._console(f"Epoch {self._current_epoch + 1}/{total} | no optimization steps run.")
 
     def _console(self, msg: str) -> None:
-        print(msg)
+        if self.consoleLogging:
+            print(msg)

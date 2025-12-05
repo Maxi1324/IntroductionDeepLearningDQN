@@ -24,11 +24,22 @@ pip install -e .                        # install in editable mode (includes mlf
 ```bash
 python -m src.training
 ```
-This runs the CartPole example with mlflow logging to `mlruns/` (local file store).
+This runs the CartPole example with mlflow logging to `mlflow.db` (SQLite backend).
+
+Example with custom options (see `python -m src.training --help` for all):
+```bash
+python -m src.training 
+  --env CartPole-v1 
+  --network mlp_small 
+  --policy epsilon_greedy 
+  --epsilon 0.05 
+  --device cpu 
+  --epochs 100 
+  --run-name cartpole-demo
+```
 
 ## View logs (optional)
 ```bash
-mlflow ui --backend-store-uri mlruns --port 5000
+mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 ```
 Open http://localhost:5000 to browse metrics (loss, epoch_loss, avg_episode_length/reward).
-

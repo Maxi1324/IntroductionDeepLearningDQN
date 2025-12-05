@@ -186,3 +186,4 @@ tests/output/
 
 src/mlruns/*
 mlflow.db
+mlruns/*

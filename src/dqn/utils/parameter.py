@@ -20,4 +20,5 @@ class Parameter:
     batchSize: int
     prewarm: int
     name: str
+    seed: Optional[int] = None
     epsilon: Optional[float] = None
