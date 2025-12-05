@@ -14,11 +14,13 @@ class TrainingLogger:
     def __init__(
         self,
         run_name: str = "dqn-run",
-        tracking_uri: str = "sqlite:///mlflow.db",
+        tracking_uri: str = "file:mlruns",
         consoleLogging: bool = False,
+        enable_mlflow: bool = True,
     ) -> None:
         self.run_name = run_name
         self.tracking_uri = tracking_uri
+        self.enable_mlflow = enable_mlflow
         self._active: bool = False
         self._epoch_losses: list[float] = []
         self._current_epoch: Optional[int] = None
@@ -29,6 +31,10 @@ class TrainingLogger:
 
     @contextmanager
     def start_run(self):
+        if not self.enable_mlflow:
+            # No-op context when MLflow is disabled
+            yield
+            return
         if not self._quiet_logs_configured:
             # Silence noisy DB/table creation info logs from mlflow/alembic
             logging.getLogger("mlflow").setLevel(logging.ERROR)
@@ -81,15 +87,16 @@ class TrainingLogger:
         self._total_epochs = total_epochs
 
     def log_loss(self, loss: float, step: int) -> None:
-        mlflow.log_metric("loss", float(loss), step=step)
+        if self.enable_mlflow:
+            mlflow.log_metric("loss", float(loss), step=step)
         self._epoch_losses.append(float(loss))
 
     def log_episode_stats(self, avg_len: Optional[float], avg_ret: Optional[float]) -> None:
         if self._current_epoch is None:
             return
-        if avg_len is not None:
+        if self.enable_mlflow and avg_len is not None:
             mlflow.log_metric("avg_episode_length", avg_len, step=self._current_epoch)
-        if avg_ret is not None:
+        if self.enable_mlflow and avg_ret is not None:
             mlflow.log_metric("avg_episode_reward", avg_ret, step=self._current_epoch)
 
     def end_epoch(self, global_step: int) -> None:
@@ -97,7 +104,8 @@ class TrainingLogger:
             return
         if self._epoch_losses:
             avg_loss = float(sum(self._epoch_losses) / len(self._epoch_losses))
-            mlflow.log_metric("epoch_loss", avg_loss, step=self._current_epoch)
+            if self.enable_mlflow:
+                mlflow.log_metric("epoch_loss", avg_loss, step=self._current_epoch)
             total = self._total_epochs or 0
             self._console(
                 f"Epoch {self._current_epoch + 1}/{total} | avg_loss={avg_loss:.4f} | steps={global_step}"

@@ -9,44 +9,59 @@ from dqn.parameter import Parameter
 
 
 # Define your search space here
-NETWORKS: Iterable[str] = ["mlp_small", "mlp_medium"]
+NETWORKS: Iterable[str] = ["mlp_small"]
 POLICIES: Iterable[str] = ["epsilon_greedy", "boltzmann"]
-EPSILONS: Iterable[Optional[float]] = [0.2, 0.1, 0.3]  # only used for epsilon_greedy
+EPSILONS: Iterable[Optional[float]] = [0.2]  # only used for epsilon_greedy
 LEARNING_RATES: Iterable[float] = [0.001, 0.0001, 0.0005]
-
-# Common defaults
-BASE_CFG = {
-    "Device": "cpu",
-    "env": "CartPole-v1",
-    "envsCount": 4,
-    "discount": 0.99,
-    "collectSteps": 100,
-    "replayBufferSize": 10_000,
-    "epochs": 30,
-    "optimizationPerEpoch": 200,
-    "batchSize": 64,
-    "prewarm": 1000,
-}
+DEVICES: Iterable[str] = ["cpu"]
+ENVS: Iterable[str] = ["CartPole-v1"]
+ENVS_COUNT: Iterable[int] = [4]
+DISCOUNTS: Iterable[float] = [0.99]
+COLLECT_STEPS: Iterable[int] = [100]
+REPLAY_SIZES: Iterable[int] = [10_000]
+EPOCHS: Iterable[int] = [30]
+OPTIM_STEPS: Iterable[int] = [200]
+BATCH_SIZES: Iterable[int] = [64]
+PREWARMS: Iterable[int] = [1000]
+SEEDS: Iterable[Optional[int]] = [1]
 
 
-def build_param(idx: int, network: str, policy: str, epsilon: Optional[float], lr: float) -> Parameter:
+def build_param(
+    idx: int,
+    network: str,
+    policy: str,
+    epsilon: Optional[float],
+    lr: float,
+    device: str,
+    env: str,
+    envs_count: int,
+    discount: float,
+    collect_steps: int,
+    replay_size: int,
+    epochs: int,
+    optim_steps: int,
+    batch_size: int,
+    prewarm: int,
+    seed: Optional[int],
+) -> Parameter:
     eps_val = epsilon if policy.lower() == "epsilon_greedy" else None
-    name = f"grid-{idx}-{network}-{policy}-lr{lr}-eps{eps_val}"
+    name = f"grid-{idx}-{network}-{policy}-lr{lr}-eps{eps_val}-seed{seed}"
     return Parameter(
-        Device=BASE_CFG["Device"],
+        Device=device,
         Network=network,
         Policy=policy,
-        env=BASE_CFG["env"],
-        envsCount=BASE_CFG["envsCount"],
+        env=env,
+        envsCount=envs_count,
         learningRate=lr,
-        discount=BASE_CFG["discount"],
-        collectSteps=BASE_CFG["collectSteps"],
-        replayBufferSize=BASE_CFG["replayBufferSize"],
-        epochs=BASE_CFG["epochs"],
-        optimizationPerEpoch=BASE_CFG["optimizationPerEpoch"],
-        batchSize=BASE_CFG["batchSize"],
-        prewarm=BASE_CFG["prewarm"],
+        discount=discount,
+        collectSteps=collect_steps,
+        replayBufferSize=replay_size,
+        epochs=epochs,
+        optimizationPerEpoch=optim_steps,
+        batchSize=batch_size,
+        prewarm=prewarm,
         name=name,
+        seed=seed,
         epsilon=eps_val,
     )
 
@@ -59,8 +74,29 @@ def run_one(param: Parameter) -> None:
 
 
 def main() -> None:
-    combos = list(itertools.product(NETWORKS, POLICIES, EPSILONS, LEARNING_RATES))
-    params = [build_param(idx, net, pol, eps, lr) for idx, (net, pol, eps, lr) in enumerate(combos)]
+    combos = list(
+        itertools.product(
+            NETWORKS,
+            POLICIES,
+            EPSILONS,
+            LEARNING_RATES,
+            DEVICES,
+            ENVS,
+            ENVS_COUNT,
+            DISCOUNTS,
+            COLLECT_STEPS,
+            REPLAY_SIZES,
+            EPOCHS,
+            OPTIM_STEPS,
+            BATCH_SIZES,
+            PREWARMS,
+            SEEDS,
+        )
+    )
+    params = [
+        build_param(idx, *combo)
+        for idx, combo in enumerate(combos)
+    ]
     with ProcessPoolExecutor(max_workers=min(len(params), 50)) as ex:
         futures = [ex.submit(run_one, p) for p in params]
         wait(futures)
