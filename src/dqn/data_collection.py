@@ -7,8 +7,8 @@ import numpy as np
 from gymnasium.vector import VectorEnv
 from numpy.typing import NDArray
 
-from infrastructure.replay_buffer import ReplayBuffer
-
+from dqn.replay_buffer import ReplayBuffer
+from dqn.policies import Policy
 
 class DataCollect:
     """
@@ -21,7 +21,7 @@ class DataCollect:
         env_id: str,
         env_count: int,
         replay_buffer: ReplayBuffer,
-        policy_fn: Callable[[np.ndarray], np.ndarray],
+        policy: Policy
     ) -> None:
         self.env: VectorEnv = gym.make_vec(
             env_id,
@@ -29,7 +29,7 @@ class DataCollect:
             vectorization_mode="sync"
         )
         self.replay_buffer = replay_buffer
-        self.policy_fn = policy_fn
+        self.policy = policy
         self.env_count = env_count
 
         states, _ = self.env.reset()
@@ -39,7 +39,7 @@ class DataCollect:
         for _ in range(num_steps):
             states = self._states
 
-            actions = self.policy_fn(states)
+            actions = self.policy.policy(states)
             next_states, rewards, terminated, truncated, _ = self.env.step(actions)
 
             next_states = next_states.astype(np.float32)
@@ -48,7 +48,7 @@ class DataCollect:
 
             assert isinstance(states, np.ndarray) and states.dtype == np.float32
             assert isinstance(next_states, np.ndarray) and next_states.dtype == np.float32
-            assert isinstance(actions, np.ndarray) and actions.dtype == np.int64
+            assert isinstance(actions, np.ndarray) and actions.dtype == np.int32
             assert isinstance(rewards, np.ndarray) and rewards.dtype == np.float32
             assert isinstance(dones, np.ndarray) and dones.dtype == np.bool_
 
