@@ -18,11 +18,13 @@ class TrainingLogger:
     def __init__(
         self,
         run_name: str = "dqn-run",
+        experiment_name: str | None = None,
         tracking_uri: str | None = None,
         consoleLogging: bool = False,
         enable_mlflow: bool = True,
     ) -> None:
         self.run_name = run_name
+        self.experiment_name = experiment_name
         self.tracking_uri = tracking_uri or os.getenv(
             "MLFLOW_TRACKING_URI", "postgresql://postgres@localhost:5432/mlflow"
         )
@@ -52,6 +54,8 @@ class TrainingLogger:
             logging.getLogger("alembic").setLevel(logging.ERROR)
             self._quiet_logs_configured = True
         mlflow.set_tracking_uri(self.tracking_uri)
+        if self.experiment_name:
+            mlflow.set_experiment(self.experiment_name)
         with mlflow.start_run(run_name=self.run_name):
             self._active = True
             self._run_start = time.perf_counter()

@@ -15,6 +15,7 @@ from dqn.policies import get_policy
 import mlflow
 import tempfile
 from pathlib import Path
+import uuid
 
 
 class Agent:
@@ -54,7 +55,11 @@ class Agent:
         policy_instance.setOnlinePredictor(onlinePredictor)
         self.policy = policy_instance
         validate_configuration(self.param, self.dataCollection, self.optimizer, self.policy, self.device)
-        self.logger = TrainingLogger(run_name=getattr(param, "name", "dqn-run"), consoleLogging=consoleLogging)
+        self.logger = TrainingLogger(
+            run_name=getattr(param, "name", "dqn-run"),
+            experiment_name=getattr(param, "experiment", None),
+            consoleLogging=consoleLogging,
+        )
 
     def evaluate(self, episodes: int = 20, max_episode_steps: int = 10_000, env_steps_total: int | None = None) -> float:
         eval_env = gym.make(self.param.env, max_episode_steps=max_episode_steps)
@@ -149,6 +154,7 @@ class Agent:
                 fname_parts = [getattr(self.param, "name", "dqn-run") or "dqn-run"]
                 if getattr(self.param, "seed", None) is not None:
                     fname_parts.append(f"seed{self.param.seed}")
+                fname_parts.append(uuid.uuid4().hex[:6])
                 local_path = local_dir / ( "_".join(fname_parts) + ".pt")
                 torch.save(self.optimizer.getOnlineNetwork().state_dict(), local_path)
                 self.logger._console(f"Saved model locally to {local_path}")

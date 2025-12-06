@@ -24,3 +24,5 @@ class Parameter:
     epsilon: Optional[float] = None
     epsilonEnd: Optional[float] = None
     targetUpdateEvery: int = 1
+    experiment: Optional[str] = None
+    idx: Optional[int] = None

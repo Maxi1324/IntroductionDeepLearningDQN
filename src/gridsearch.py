@@ -7,26 +7,25 @@ from typing import Iterable, Optional
 from dqn.agent import Agent
 from dqn.parameter import Parameter
 
-gl = "asd"
-
-
+n = "Acrobot-v1"
+gl = n
+EXPERIMENT_NAME = n
+ENVS: Iterable[str] = [n]
 NETWORKS: Iterable[str] = ["mlp_large"]
 POLICIES: Iterable[str] = ["epsilon_greedy"]
-
 EPSILONS: Iterable[Optional[float]] = [1.0]
 EPSILONS_END: Iterable[Optional[float]] = [0.01]
 LEARNING_RATES: Iterable[float] = [0.0001]
 DEVICES: Iterable[str] = ["cuda"]
-ENVS: Iterable[str] = ["CartPole-v1"]
 ENVS_COUNT: Iterable[int] = [5]
 DISCOUNTS: Iterable[float] = [0.99]
 COLLECT_STEPS: Iterable[int] = [200]
 REPLAY_SIZES: Iterable[int] = [50_000]
-EPOCHS: Iterable[int] = [50]
+EPOCHS: Iterable[int] = [400]
 OPTIM_STEPS: Iterable[int] = [50]
-BATCH_SIZES: Iterable[int] = [256,512]
+BATCH_SIZES: Iterable[int] = [512]
 PREWARMS: Iterable[int] = [5_000]
-SEEDS: Iterable[Optional[int]] = [1,2,3,4,5,6]
+SEEDS: Iterable[Optional[int]] = [1,2,3,4]
 TARGET_UPDATE_EVERY: Iterable[int] = [20]
 
 
@@ -75,6 +74,8 @@ def build_param(
         epsilon=eps_val,
         epsilonEnd=eps_end_val,
         targetUpdateEvery=target_update_every,
+        experiment=EXPERIMENT_NAME,
+        idx=idx,
     )
 
 
