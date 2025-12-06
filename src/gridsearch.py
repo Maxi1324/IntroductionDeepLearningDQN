@@ -7,22 +7,22 @@ from typing import Iterable, Optional
 from dqn.agent import Agent
 from dqn.parameter import Parameter
 
-gl="bigtime3"
-NETWORKS: Iterable[str] = ["mlp_small"]
+gl="cartpole_500"
+NETWORKS: Iterable[str] = ["mlp_medium"]
 POLICIES: Iterable[str] = ["epsilon_greedy"]
-EPSILONS: Iterable[Optional[float]] = [0.2]  # start epsilon / temperature
+EPSILONS: Iterable[Optional[float]] = [1.0]  # start epsilon / temperature
 EPSILONS_END: Iterable[Optional[float]] = [0.01]  # end epsilon / temperature
-LEARNING_RATES: Iterable[float] = [ 0.0007]
-DEVICES: Iterable[str] = ["cpu"]
+LEARNING_RATES: Iterable[float] = [0.0005]
+DEVICES: Iterable[str] = ["cuda"]
 ENVS: Iterable[str] = ["CartPole-v1"]
-ENVS_COUNT: Iterable[int] = [4,10,30,50]
-DISCOUNTS: Iterable[float] = [0.99,0.9,0.999]
-COLLECT_STEPS: Iterable[int] = [10,50,100]
-REPLAY_SIZES: Iterable[int] = [10_000,20_000,50_000]
-EPOCHS: Iterable[int] = [10,20,50,100]
-OPTIM_STEPS: Iterable[int] = [10,30,50]
-BATCH_SIZES: Iterable[int] = [32,64,128,256]
-PREWARMS: Iterable[int] = [2000,10000]
+ENVS_COUNT: Iterable[int] = [8]
+DISCOUNTS: Iterable[float] = [0.99]
+COLLECT_STEPS: Iterable[int] = [512]
+REPLAY_SIZES: Iterable[int] = [50_000]
+EPOCHS: Iterable[int] = [80]
+OPTIM_STEPS: Iterable[int] = [256]
+BATCH_SIZES: Iterable[int] = [64]
+PREWARMS: Iterable[int] = [8000]
 SEEDS: Iterable[Optional[int]] = [1]
 
 
@@ -105,7 +105,7 @@ def main() -> None:
         build_param(idx, *combo)
         for idx, combo in enumerate(combos)
     ]
-    with ProcessPoolExecutor(max_workers=min(len(params), 15)) as ex:
+    with ProcessPoolExecutor(max_workers=min(len(params), 20)) as ex:
         futures = [ex.submit(run_one, p) for p in params]
         wait(futures)
         # Surface any worker exceptions

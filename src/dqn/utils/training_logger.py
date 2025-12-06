@@ -8,6 +8,9 @@ import os
 
 import mlflow
 
+# Global flag to turn all MLflow server logging on/off from this module
+LOG_TO_MLFLOW = True
+
 
 class TrainingLogger:
     """Thin wrapper around MLflow logging so Agent stays clean."""
@@ -23,7 +26,7 @@ class TrainingLogger:
         self.tracking_uri = tracking_uri or os.getenv(
             "MLFLOW_TRACKING_URI", "postgresql://postgres@localhost:5432/mlflow"
         )
-        self.enable_mlflow = enable_mlflow
+        self.enable_mlflow = enable_mlflow and LOG_TO_MLFLOW
         self._active: bool = False
         self._epoch_losses: list[float] = []
         self._current_epoch: Optional[int] = None
@@ -31,6 +34,11 @@ class TrainingLogger:
         self.consoleLogging = consoleLogging
         self._run_start: Optional[float] = None
         self._quiet_logs_configured = False
+        self._buffered_epoch_metrics: list[dict[str, float | int]] = []
+        self._flush_interval_epochs: int = 20
+        self._pending_avg_len: Optional[float] = None
+        self._pending_avg_ret: Optional[float] = None
+        self._epoch_start: Optional[float] = None
 
     @contextmanager
     def start_run(self):
@@ -89,27 +97,35 @@ class TrainingLogger:
         self._epoch_losses = []
         self._current_epoch = epoch
         self._total_epochs = total_epochs
+        self._pending_avg_len = None
+        self._pending_avg_ret = None
+        self._epoch_start = time.perf_counter()
 
     def log_loss(self, loss: float, step: int) -> None:
-        if self.enable_mlflow:
-            mlflow.log_metric("loss", float(loss), step=step)
+        # Only buffer for epoch-level logging to reduce backend traffic
         self._epoch_losses.append(float(loss))
 
     def log_episode_stats(self, avg_len: Optional[float], avg_ret: Optional[float]) -> None:
         if self._current_epoch is None:
             return
-        if self.enable_mlflow and avg_len is not None:
-            mlflow.log_metric("avg_episode_length", avg_len, step=self._current_epoch)
-        if self.enable_mlflow and avg_ret is not None:
-            mlflow.log_metric("avg_episode_reward", avg_ret, step=self._current_epoch)
+        self._pending_avg_len = avg_len
+        self._pending_avg_ret = avg_ret
 
     def end_epoch(self, global_step: int) -> None:
         if self._current_epoch is None:
             return
         if self._epoch_losses:
             avg_loss = float(sum(self._epoch_losses) / len(self._epoch_losses))
-            if self.enable_mlflow:
-                mlflow.log_metric("epoch_loss", avg_loss, step=self._current_epoch)
+            # Buffer metrics for deferred logging
+            metrics: dict[str, float | int] = {"epoch": self._current_epoch, "epoch_loss": avg_loss}
+            if self._pending_avg_len is not None:
+                metrics["avg_episode_length"] = self._pending_avg_len
+            if self._pending_avg_ret is not None:
+                metrics["avg_episode_reward"] = self._pending_avg_ret
+            metrics["global_step"] = global_step
+            if self._epoch_start is not None:
+                metrics["epoch_duration_seconds"] = time.perf_counter() - self._epoch_start
+            self._buffered_epoch_metrics.append(metrics)
             total = self._total_epochs or 0
             self._console(
                 f"Epoch {self._current_epoch + 1}/{total} | avg_loss={avg_loss:.4f} | steps={global_step}"
@@ -117,6 +133,26 @@ class TrainingLogger:
         else:
             total = self._total_epochs or 0
             self._console(f"Epoch {self._current_epoch + 1}/{total} | no optimization steps run.")
+
+        # Flush every N epochs or on last epoch
+        if self.enable_mlflow and self._total_epochs is not None:
+            if ((self._current_epoch + 1) % self._flush_interval_epochs == 0) or (
+                self._current_epoch + 1 == self._total_epochs
+            ):
+                for m in self._buffered_epoch_metrics:
+                    mlflow.log_metric("epoch_loss", float(m["epoch_loss"]), step=int(m["epoch"]))
+                    if "avg_episode_length" in m:
+                        mlflow.log_metric("avg_episode_length", float(m["avg_episode_length"]), step=int(m["epoch"]))
+                    if "avg_episode_reward" in m:
+                        mlflow.log_metric("avg_episode_reward", float(m["avg_episode_reward"]), step=int(m["epoch"]))
+                    if "epoch_duration_seconds" in m:
+                        mlflow.log_metric(
+                            "epoch_duration_seconds", float(m["epoch_duration_seconds"]), step=int(m["epoch"])
+                        )
+                self._buffered_epoch_metrics.clear()
+                self._pending_avg_len = None
+                self._pending_avg_ret = None
+                self._epoch_start = None
 
     def _console(self, msg: str) -> None:
         if self.consoleLogging:
