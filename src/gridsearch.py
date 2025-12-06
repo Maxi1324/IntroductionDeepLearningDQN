@@ -7,7 +7,7 @@ from typing import Iterable, Optional
 from dqn.agent import Agent
 from dqn.parameter import Parameter
 
-n = "Acrobot-v1"
+n = "LunarLander-v3"
 gl = n
 EXPERIMENT_NAME = n
 ENVS: Iterable[str] = [n]
@@ -21,9 +21,9 @@ ENVS_COUNT: Iterable[int] = [5]
 DISCOUNTS: Iterable[float] = [0.99]
 COLLECT_STEPS: Iterable[int] = [200]
 REPLAY_SIZES: Iterable[int] = [50_000]
-EPOCHS: Iterable[int] = [400]
-OPTIM_STEPS: Iterable[int] = [50]
-BATCH_SIZES: Iterable[int] = [512]
+EPOCHS: Iterable[int] = [300]
+OPTIM_STEPS: Iterable[int] = [250]
+BATCH_SIZES: Iterable[int] = [256]
 PREWARMS: Iterable[int] = [5_000]
 SEEDS: Iterable[Optional[int]] = [1,2,3,4]
 TARGET_UPDATE_EVERY: Iterable[int] = [20]
@@ -54,7 +54,7 @@ def build_param(
     if policy.lower() == "boltzmann":
         eps_val = epsilon
         eps_end_val = epsilon_end
-    name = f"{gl}"
+    name = f"{gl}_{idx}"
     return Parameter(
         Device=device,
         Network=network,
@@ -75,7 +75,6 @@ def build_param(
         epsilonEnd=eps_end_val,
         targetUpdateEvery=target_update_every,
         experiment=EXPERIMENT_NAME,
-        idx=idx,
     )
 
 

@@ -27,7 +27,7 @@ class DataCollect:
             env_id,
             num_envs=env_count,
             vectorization_mode="sync",
-            max_episode_steps=10_000,
+          #  max_episode_steps=10_000,
         )
         self.replay_buffer = replay_buffer
         self.policy = policy

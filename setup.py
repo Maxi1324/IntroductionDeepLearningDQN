@@ -13,5 +13,7 @@ setup(
         "gymnasium[classic-control]",
         "pyodbc",
         "psycopg2-binary",
+        "swig",
+        "gymnasium[box2d]"
     ],
 )
