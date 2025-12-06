@@ -18,5 +18,4 @@ def get_policy(name: str, **kwargs):
     return POLICY_REGISTRY[key](**kwargs)
 
 
-__all__ = ["Policy", "GreedyPolicy", "BoltzmannPolicy", "EpsilonGreedyPolicy", "get_policy", "getPolicy"]
 

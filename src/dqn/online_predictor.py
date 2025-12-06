@@ -8,11 +8,6 @@ from numpy.typing import NDArray
 
 
 class OnlinePredictor:
-    """
-    Runs the current online network on a batch of states and returns raw Q-values
-    (numpy float32) so downstream policies like greedy or Boltzmann can decide.
-    """
-
     def __init__(self, get_online_network: Callable[[], torch.nn.Module], device: torch.device) -> None:
         self.get_online_network = get_online_network
         self.device = device

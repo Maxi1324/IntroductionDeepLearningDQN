@@ -8,12 +8,10 @@ import os
 
 import mlflow
 
-# Global flag to turn all MLflow server logging on/off from this module
 LOG_TO_MLFLOW = True
 
 
 class TrainingLogger:
-    """Thin wrapper around MLflow logging so Agent stays clean."""
 
     def __init__(
         self,
@@ -45,11 +43,9 @@ class TrainingLogger:
     @contextmanager
     def start_run(self):
         if not self.enable_mlflow:
-            # No-op context when MLflow is disabled
             yield
             return
         if not self._quiet_logs_configured:
-            # Silence noisy DB/table creation info logs from mlflow/alembic
             logging.getLogger("mlflow").setLevel(logging.ERROR)
             logging.getLogger("alembic").setLevel(logging.ERROR)
             self._quiet_logs_configured = True
@@ -106,7 +102,6 @@ class TrainingLogger:
         self._epoch_start = time.perf_counter()
 
     def log_loss(self, loss: float, step: int) -> None:
-        # Only buffer for epoch-level logging to reduce backend traffic
         self._epoch_losses.append(float(loss))
 
     def log_episode_stats(self, avg_len: Optional[float], avg_ret: Optional[float]) -> None:
@@ -120,7 +115,6 @@ class TrainingLogger:
             return
         if self._epoch_losses:
             avg_loss = float(sum(self._epoch_losses) / len(self._epoch_losses))
-            # Buffer metrics for deferred logging
             metrics: dict[str, float | int] = {"epoch": self._current_epoch, "epoch_loss": avg_loss}
             if self._pending_avg_len is not None:
                 metrics["avg_episode_length"] = self._pending_avg_len
@@ -138,7 +132,6 @@ class TrainingLogger:
             total = self._total_epochs or 0
             self._console(f"Epoch {self._current_epoch + 1}/{total} | no optimization steps run.")
 
-        # Flush every N epochs or on last epoch
         if self.enable_mlflow and self._total_epochs is not None:
             if ((self._current_epoch + 1) % self._flush_interval_epochs == 0) or (
                 self._current_epoch + 1 == self._total_epochs

@@ -8,13 +8,7 @@ from dqn.policies.policy_base import Policy
 
 
 class GreedyPolicy(Policy):
-    """
-    Greedy argmax over provided Q-values (already computed by online_predictor).
-    Returns actions as int32 numpy array to match vector env expectations.
-    """
-
     def __init__(self, seed: Optional[int] = None) -> None:
-        # seed kept for API symmetry; not used since greedy is deterministic
         super().__init__(seed=seed)
 
     def policy(

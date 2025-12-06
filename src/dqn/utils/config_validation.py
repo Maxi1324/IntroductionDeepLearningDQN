@@ -19,10 +19,6 @@ def validate_configuration(
     policy: Policy,
     device: torch.device,
 ) -> None:
-    """
-    Validate that parameters, environment, and network dimensions are consistent.
-    Exits the program with a short English message on failure.
-    """
     p = param
     states_np = data_collection._states
 

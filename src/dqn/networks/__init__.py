@@ -8,15 +8,11 @@ from torch import nn
 from .feedforward_small import FeedForwardSmall
 from .feedforward_medium import FeedForwardMedium
 from .feedforward_large import FeedForwardLarge
-from .conv_small import ConvSmall
-from .conv_nature import ConvNature
 
 MODEL_REGISTRY: Dict[str, Tuple[Type[nn.Module], Dict[str, Any]]] = {
     "mlp_small": (FeedForwardSmall, {"state_dim": 4, "action_dim": 2}),
     "mlp_medium": (FeedForwardMedium, {"state_dim": 4, "action_dim": 2}),
     "mlp_large": (FeedForwardLarge, {"state_dim": 4, "action_dim": 2}),
-    "conv_small": (ConvSmall, {"in_channels": 4, "action_dim": 2, "input_height": 84, "input_width": 84}),
-    "conv_nature": (ConvNature, {"in_channels": 4, "action_dim": 2, "input_height": 84, "input_width": 84}),
 }
 
 

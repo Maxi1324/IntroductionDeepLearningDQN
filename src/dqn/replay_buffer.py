@@ -150,20 +150,7 @@ class ReplayBuffer:
     def sample(
         self, batch_size: int
     ) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
-        """
-        Uniformly sample a batch of transitions.
-
-        Returns
-        -------
-        states: Tensor
-        actions: Tensor
-        rewards: Tensor
-        next_states: Tensor
-        dones: Tensor (bool)
-
-        Tensors are placed on `self.device` (if set) or stay on CPU. Raises ValueError
-        if fewer than `batch_size` samples are stored.
-        """
+      
         if self._size < batch_size:
             raise ValueError(f"Not enough samples: have {self._size}, need {batch_size}")
 

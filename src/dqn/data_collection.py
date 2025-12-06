@@ -11,11 +11,6 @@ from dqn.replay_buffer import ReplayBuffer
 from dqn.policies import Policy
 
 class DataCollect:
-    """
-    Data collector that runs a Gymnasium vector environment with a provided policy
-    and writes transitions into a replay buffer.
-    """
-
     def __init__(
         self,
         env_id: str,

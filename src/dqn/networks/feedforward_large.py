@@ -7,7 +7,6 @@ import torch.nn as nn
 
 
 class FeedForwardLarge(nn.Module):
-    """Wider/deeper MLP for low-dimensional state vectors."""
 
     def __init__(
         self,

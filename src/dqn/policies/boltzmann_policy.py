@@ -8,11 +8,6 @@ from dqn.policies.policy_base import Policy
 
 
 class BoltzmannPolicy(Policy):
-    """
-    Samples actions according to a Boltzmann/softmax distribution over Q-values.
-    Expects Q-values already computed (e.g., by OnlinePredictor) and returns int32 actions.
-    """
-
     def __init__(self, temperature: float = 1.0, temperature_end: float = 0.1, seed: Optional[int] = None) -> None:
         if temperature <= 0 or temperature_end <= 0:
             raise ValueError("temperature values must be > 0")
@@ -49,7 +44,6 @@ class BoltzmannPolicy(Policy):
             raise ValueError(f"Expected q_values shape (batch, actions), got {q.shape}")
 
         temperature = self._current_temp(current_step, max_steps, current_epoch, max_epochs)
-        # numerically stable softmax
         logits = q / temperature
         logits -= logits.max(axis=1, keepdims=True)
         exp = np.exp(logits, dtype=np.float64)
