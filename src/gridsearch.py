@@ -7,7 +7,7 @@ from typing import Iterable, Optional
 from dqn.agent import Agent
 from dqn.parameter import Parameter
 
-gl = "oldschool6"
+gl = "asd"
 
 
 NETWORKS: Iterable[str] = ["mlp_large"]
