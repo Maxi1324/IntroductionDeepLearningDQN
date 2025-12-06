@@ -19,8 +19,14 @@ class Agent:
         policy_kwargs = {}
         if param.Policy.lower() == "epsilon_greedy" and param.epsilon is not None:
             policy_kwargs["epsilon"] = param.epsilon
+            if param.epsilonEnd is not None:
+                policy_kwargs["epsilon_end"] = param.epsilonEnd
         if param.seed is not None:
             policy_kwargs["seed"] = param.seed
+        if param.Policy.lower() == "boltzmann" and param.epsilon is not None:
+            policy_kwargs["temperature"] = param.epsilon
+            if param.epsilonEnd is not None:
+                policy_kwargs["temperature_end"] = param.epsilonEnd
         policy_instance = get_policy(param.Policy, **policy_kwargs)
         self.replayBuffer: ReplayBuffer = ReplayBuffer(param.replayBufferSize, self.device)
         self.dataCollection: DataCollect = DataCollect(param.env, param.envsCount, self.replayBuffer, policy_instance)
@@ -38,7 +44,9 @@ class Agent:
             global_step = 0
             for epoch in range(0, self.param.epochs):
                 self.logger.start_epoch(epoch, self.param.epochs)
-                avg_len, avg_ret = self.dataCollection.collect(self.param.collectSteps)
+                avg_len, avg_ret = self.dataCollection.collect(
+                    self.param.collectSteps, current_epoch=epoch, max_epochs=self.param.epochs
+                )
 
                 for _ in range(0, self.param.optimizationPerEpoch):
                     states, actions, rewards, next_states, dones = self.replayBuffer.sample(self.param.batchSize)

@@ -29,10 +29,12 @@ class Policy(ABC):
     def setOnlinePredictor(self, online_predictor: OnlinePredictor) -> None:
         self.online_predictor = online_predictor
 
-    def getAction(self, states: np.ndarray) -> NDArray[np.int32]:
+    def getAction(
+        self, states: np.ndarray, current_epoch: int | None = None, max_epochs: int | None = None
+    ) -> NDArray[np.int32]:
         """
         Convenience: compute Q-values via the attached OnlinePredictor and return actions.
         """
         assert self.online_predictor is not None, "online_predictor is not set on this Policy instance."
         q_values = self.online_predictor.getLogits(states)
-        return self.policy(q_values)
+        return self.policy(q_values, current_epoch=current_epoch, max_epochs=max_epochs)

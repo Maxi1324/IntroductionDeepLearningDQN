@@ -10,6 +10,8 @@ setup(
         "torch",
         "gymnasium",
         "mlflow",
-        "gymnasium[classic-control]"
+        "gymnasium[classic-control]",
+        "pyodbc",
+        "psycopg2-binary",
     ],
 )

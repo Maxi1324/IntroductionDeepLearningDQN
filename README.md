@@ -24,7 +24,7 @@ pip install -e .                        # install in editable mode (includes mlf
 ```bash
 python -m src.training
 ```
-This runs the CartPole example with mlflow logging to `mlflow.db` (SQLite backend).
+This runs the CartPole example with mlflow logging to `mlruns/` (file backend by default).
 
 Example with custom options (see `python -m src.training --help` for all):
 ```bash
@@ -40,6 +40,17 @@ python -m src.training
 
 ## View logs (optional)
 ```bash
-mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
+mlflow ui --backend-store-uri mlruns --port 5000
 ```
 Open http://localhost:5000 to browse metrics (loss, epoch_loss, avg_episode_length/reward).
+
+### MLflow with Postgres (optional, no password)
+1) Start Postgres via Docker:
+```bash
+docker compose up -d postgres
+```
+2) Tracking URI setzen (Beispiel, PowerShell):
+```bash
+$env:MLFLOW_TRACKING_URI="postgresql://postgres@localhost:5432/mlflow"
+```
+3) Training wie gehabt starten (`python -m src.training`). Der Logger liest `MLFLOW_TRACKING_URI` automatisch.

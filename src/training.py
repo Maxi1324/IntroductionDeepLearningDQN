@@ -13,6 +13,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--network", default="mlp_small", dest="Network", help="Network key from dqn.networks.get_model")
     parser.add_argument("--policy", default="epsilon_greedy", dest="Policy", help="Policy key from dqn.policies.get_policy")
     parser.add_argument("--epsilon", type=float, default=0.1, help="Epsilon for epsilon_greedy (ignored otherwise)")
+    parser.add_argument("--epsilon-end", type=float, default=0.05, dest="epsilonEnd", help="End epsilon/temperature for scheduling")
     parser.add_argument("--env", default="CartPole-v1", dest="env", help="Gymnasium env id")
     parser.add_argument("--envs-count", type=int, default=4, dest="envsCount", help="Number of vectorized envs")
     parser.add_argument("--learning-rate", type=float, default=1e-3, dest="learningRate", help="Adam learning rate")
@@ -32,6 +33,7 @@ def make_params(args: argparse.Namespace) -> Parameter:
     eps: Optional[float] = args.epsilon
     if args.Policy.lower() != "epsilon_greedy":
         eps = None
+    eps_end: Optional[float] = args.epsilonEnd if args.Policy.lower() == "epsilon_greedy" else None
     return Parameter(
         Device=args.Device,
         Network=args.Network,
@@ -49,6 +51,7 @@ def make_params(args: argparse.Namespace) -> Parameter:
         name=args.name,
         seed=args.seed,
         epsilon=eps,
+        epsilonEnd=eps_end,
     )
 
 

@@ -37,14 +37,14 @@ class DataCollect:
         self._ep_len: NDArray[np.int32] = np.zeros(env_count, dtype=np.int32)
         self._ep_return: NDArray[np.float32] = np.zeros(env_count, dtype=np.float32)
 
-    def collect(self, num_steps: int) -> tuple[float | None, float | None]:
+    def collect(self, num_steps: int, current_epoch: int | None = None, max_epochs: int | None = None) -> tuple[float | None, float | None]:
         completed_lengths: list[int] = []
         completed_returns: list[float] = []
 
         for _ in range(num_steps):
             states = self._states
 
-            actions = self.policy.getAction(states)
+            actions = self.policy.getAction(states, current_epoch=current_epoch, max_epochs=max_epochs)
             next_states, rewards, terminated, truncated, _ = self.env.step(actions)
 
             next_states = next_states.astype(np.float32)

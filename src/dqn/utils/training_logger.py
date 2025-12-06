@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Any, Dict, Optional
 import time
 import logging
+import os
 
 import mlflow
 
@@ -14,12 +15,14 @@ class TrainingLogger:
     def __init__(
         self,
         run_name: str = "dqn-run",
-        tracking_uri: str = "file:mlruns",
+        tracking_uri: str | None = None,
         consoleLogging: bool = False,
         enable_mlflow: bool = True,
     ) -> None:
         self.run_name = run_name
-        self.tracking_uri = tracking_uri
+        self.tracking_uri = tracking_uri or os.getenv(
+            "MLFLOW_TRACKING_URI", "postgresql://postgres@localhost:5432/mlflow"
+        )
         self.enable_mlflow = enable_mlflow
         self._active: bool = False
         self._epoch_losses: list[float] = []
@@ -76,6 +79,7 @@ class TrainingLogger:
             "network": getattr(param, "Network", None),
             "policy": getattr(param, "Policy", None),
             "epsilon": getattr(param, "epsilon", None),
+            "epsilonEnd": getattr(param, "epsilonEnd", None),
             "seed": getattr(param, "seed", None),
             "run_name": getattr(param, "name", None),
         }

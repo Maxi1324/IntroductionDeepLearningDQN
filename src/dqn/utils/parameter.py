@@ -22,3 +22,4 @@ class Parameter:
     name: str
     seed: Optional[int] = None
     epsilon: Optional[float] = None
+    epsilonEnd: Optional[float] = None

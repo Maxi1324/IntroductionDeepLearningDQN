@@ -17,10 +17,6 @@ def get_policy(name: str, **kwargs):
         raise ValueError(f"Unknown policy '{name}'. Available: {list(POLICY_REGISTRY.keys())}")
     return POLICY_REGISTRY[key](**kwargs)
 
-def getPolicy(seed=None, name: str = "greedy", online_predictor=None, **kwargs):
-    """CamelCase helper to fetch a policy by name, primarily for legacy code."""
-    return get_policy(name, seed=seed, online_predictor=online_predictor, **kwargs)
-
 
 __all__ = ["Policy", "GreedyPolicy", "BoltzmannPolicy", "EpsilonGreedyPolicy", "get_policy", "getPolicy"]
 

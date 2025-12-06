@@ -52,8 +52,12 @@ def validate_configuration(
         fail("env id must be set.")
     if not isinstance(p.Policy, str) or not p.Policy:
         fail("Policy must be a non-empty string key.")
-    if p.Policy.lower() == "epsilon_greedy" and p.epsilon is None:
-        fail("epsilon must be set for epsilon_greedy policy.")
+    if p.Policy.lower() == "epsilon_greedy":
+        if p.epsilon is None or p.epsilonEnd is None:
+            fail("epsilon and epsilonEnd must be set for epsilon_greedy policy.")
+    if p.Policy.lower() == "boltzmann":
+        if p.epsilon is None or p.epsilonEnd is None:
+            fail("temperature start/end (epsilon/epsilonEnd) must be set for boltzmann policy.")
     if policy.online_predictor is None:
         fail("Policy has no OnlinePredictor attached.")
 

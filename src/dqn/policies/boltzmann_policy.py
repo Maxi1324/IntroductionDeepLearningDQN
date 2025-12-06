@@ -13,20 +13,28 @@ class BoltzmannPolicy(Policy):
     Expects Q-values already computed (e.g., by OnlinePredictor) and returns int32 actions.
     """
 
-    def __init__(self, temperature: float = 1.0, seed: Optional[int] = None) -> None:
-        if temperature <= 0:
-            raise ValueError("temperature must be > 0")
+    def __init__(self, temperature: float = 1.0, temperature_end: float = 0.1, seed: Optional[int] = None) -> None:
+        if temperature <= 0 or temperature_end <= 0:
+            raise ValueError("temperature values must be > 0")
         super().__init__(seed=seed)
-        self.temperature = float(temperature)
+        self.temperature_start = float(temperature)
+        self.temperature_end = float(temperature_end)
         self.rng = np.random.default_rng(seed)
 
-    def policy(self, q_values: np.ndarray) -> np.ndarray:
+    def _current_temp(self, current_epoch: Optional[int], max_epochs: Optional[int]) -> float:
+        if current_epoch is None or max_epochs is None or max_epochs <= 1:
+            return self.temperature_start
+        frac = min(max(current_epoch, 0), max_epochs - 1) / float(max_epochs - 1)
+        return self.temperature_start + frac * (self.temperature_end - self.temperature_start)
+
+    def policy(self, q_values: np.ndarray, current_epoch: Optional[int] = None, max_epochs: Optional[int] = None) -> np.ndarray:
         q = np.asarray(q_values, dtype=np.float32, order="C")
         if q.ndim != 2:
             raise ValueError(f"Expected q_values shape (batch, actions), got {q.shape}")
 
+        temperature = self._current_temp(current_epoch, max_epochs)
         # numerically stable softmax
-        logits = q / self.temperature
+        logits = q / temperature
         logits -= logits.max(axis=1, keepdims=True)
         exp = np.exp(logits, dtype=np.float64)
         probs = exp / exp.sum(axis=1, keepdims=True)
