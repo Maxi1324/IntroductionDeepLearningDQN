@@ -1,56 +1,95 @@
-# IntroductionDeepLearningDQN
+# Deep Q-Network (DQN) Implementation
 
-Minimal notes on how to set up and run the included DQN sample.
+## 1. Overview
 
-## Project layout (relevant bits)
-- `src/dqn/agent.py` – wires together replay buffer, data collection, optimizer, policy, logging.
-- `src/dqn/data_collection.py` – vectorized Gymnasium rollout + episode stats.
-- `src/dqn/replay_buffer.py` – cyclic buffer with Torch-ready sampling.
-- `src/dqn/optimizer.py` – DQN update (Double-Q action selection).
-- `src/dqn/policies/` – greedy/epsilon-greedy/boltzmann and registry (`get_policy`).
-- `src/dqn/networks/` – small MLPs / conv nets and registry (`get_model`).
-- `src/dqn/utils/` – config validation, training logger, parameter dataclass.
-- `src/training.py` – example entrypoint: trains CartPole with mlflow logging to `mlruns/`.
+This project provides a comprehensive implementation of a Deep Q-Network (DQN) agent designed to solve reinforcement learning environments from the [Gymnasium](https://gymnasium.farama.org/) library. The agent is built using PyTorch and includes integrated experiment tracking with [MLflow](https://mlflow.org/).
 
-## Setup
+## 2. Install
+
+Git, Python13, docker
 ```bash
-cd IntroductionDeepLearningDQN          # enter project root
-python -m venv .venv                    # create virtual environment
-.\.venv\Scripts\Activate.ps1            # PowerShell; or source .venv/bin/activate on Unix
-pip install -e .                        # install in editable mode (includes mlflow, gymnasium, torch)
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
+docker compose pull
 ```
 
-## Run the sample
-```bash
-python -m src.training
-```
-This runs the CartPole example with mlflow logging to `mlruns/` (file backend by default).
+## 3 Start
 
-Example with custom options (see `python -m src.training --help` for all):
+Start postgres for MLflow
 ```bash
-python -m src.training 
-  --env CartPole-v1 
-  --network mlp_small 
-  --policy epsilon_greedy 
-  --epsilon 0.05 
-  --device cpu 
-  --epochs 100 
-  --run-name cartpole-demo
+docker compose up
 ```
 
-## View logs (optional)
+Start Mlflow
 ```bash
-mlflow ui --backend-store-uri mlruns --port 5000
+mlflow ui --backend-store-uri postgresql://postgres@localhost:5432/mlflow --port 5000
 ```
-Open http://localhost:5000 to browse metrics (loss, epoch_loss, avg_episode_length/reward).
 
-### MLflow with Postgres (optional, no password)
-1) Start Postgres via Docker:
+Start individual training run
 ```bash
-docker compose up -d postgres
+python src/training.py --device <DEVICE> --network <NETWORK> ...
 ```
-2) Tracking URI setzen (Beispiel, PowerShell):
+| Argument | Description | Default |
+|---|---|---|
+| `--device` | Torch device string, e.g., cpu or cuda:0 | `cpu` |
+| `--network` | Network key from dqn.networks.get_model | `mlp_small` |
+| `--policy` | Policy key from dqn.policies.get_policy | `epsilon_greedy` |
+| `--epsilon` | Epsilon for epsilon_greedy (ignored otherwise) | `0.1` |
+| `--epsilon-end` | End epsilon/temperature for scheduling | `0.05` |
+| `--env` | Gymnasium env id | `CartPole-v1` |
+| `--envs-count` | Number of vectorized envs | `4` |
+| `--learning-rate` | Adam learning rate | `1e-3` |
+| `--discount` | Discount factor gamma | `0.99` |
+| `--collect-steps` | Env steps collected per epoch | `100` |
+| `--replay-buffer-size` | Replay buffer capacity | `10000` |
+| `--epochs` | Training epochs | `50` |
+| `--optim-per-epoch`| Optimization steps per epoch | `200` |
+| `--batch-size` | Mini-batch size | `64` |
+| `--prewarm`| Initial random transitions before training | `1000` |
+| `--run-name` | MLflow run name | `cartpole-run` |
+| `--seed`| Optional random seed for policy/envs | `None` |
+
+Start gridsearch
+
 ```bash
-$env:MLFLOW_TRACKING_URI="postgresql://postgres@localhost:5432/mlflow"
+
+python src/gridsearch.py --env-name <ENV_NAME> --num-runs <NUMBER_OF_RUNS>
+
 ```
-3) Training wie gehabt starten (`python -m src.training`). Der Logger liest `MLFLOW_TRACKING_URI` automatisch.
+
+The gridsearch can be configured with the following command-line arguments. Other hyperparameters can be configured by editing the global variables in `src/gridsearch.py`.
+
+
+
+| Argument | Description | Default |
+|---|---|---|
+| `--env-name` | The id of the gym environment | `LunarLander-v2` |
+| `--num-runs` | The number of runs to execute, corresponds to the number of seeds | `4` |
+
+
+
+Test a trained model
+
+```bash
+
+python src/test_model.py --model-path <PATH_TO_MODEL> --model-string <NETWORK> --env <ENV_ID>
+
+```
+
+This script runs a trained model in a given environment and records videos of the episodes.
+
+
+
+| Argument | Description | Default |
+|---|---|---|
+| `--model-path` | Path to the saved model file (`.pt`). | (required) |
+| `--model-string`| Network key from `dqn.networks.get_model` (must match the trained model). | (required) |
+| `--env` | Gymnasium env id. | (required) |
+| `--output` | Directory to save the recorded videos. | `videos` |
+| `--not-interactive`| Disable the live preview window. | (not set) |
+| `--episodes` | Number of episodes to run and record. | `5` |
+
+
+
+## 4 Results

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import itertools
 from concurrent.futures import ProcessPoolExecutor, wait
 from typing import Iterable, Optional
@@ -7,10 +8,30 @@ from typing import Iterable, Optional
 from dqn.agent import Agent
 from dqn.parameter import Parameter
 
-n = "LunarLander-v3"
-gl = n
-EXPERIMENT_NAME = n
-ENVS: Iterable[str] = [n]
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--env-name",
+        type=str,
+        default="LunarLander-v2",
+        help="the id of the gym environment",
+    )
+    parser.add_argument(
+        "--num-runs",
+        type=int,
+        default=4,
+        help="the number of runs to execute, corresponds to the number of seeds",
+    )
+    return parser.parse_args()
+
+
+ARGS = parse_args()
+ENV_NAME = ARGS.env_name
+NUMBER_OF_RUNS = ARGS.num_runs
+
+EXPERIMENT_NAME = ENV_NAME
+ENVS: Iterable[str] = [ENV_NAME]
 NETWORKS: Iterable[str] = ["mlp_large"]
 POLICIES: Iterable[str] = ["epsilon_greedy"]
 EPSILONS: Iterable[Optional[float]] = [1.0]
@@ -25,7 +46,7 @@ EPOCHS: Iterable[int] = [300]
 OPTIM_STEPS: Iterable[int] = [250]
 BATCH_SIZES: Iterable[int] = [256]
 PREWARMS: Iterable[int] = [5_000]
-SEEDS: Iterable[Optional[int]] = [1,2,3,4]
+SEEDS: Iterable[Optional[int]] = [i for i in range(1, NUMBER_OF_RUNS + 1)]
 TARGET_UPDATE_EVERY: Iterable[int] = [20]
 
 
@@ -54,7 +75,7 @@ def build_param(
     if policy.lower() == "boltzmann":
         eps_val = epsilon
         eps_end_val = epsilon_end
-    name = f"{gl}_{idx}"
+    name = f"{env}_{idx}"
     return Parameter(
         Device=device,
         Network=network,
@@ -78,14 +99,11 @@ def build_param(
     )
 
 
-i = 0
 def run_one(param: Parameter) -> None:
-    global i
-    i += 1
     print(f"Starting run {param.name}")
     agent = Agent(param, True)
     agent.train()
-    print("done ", i)
+    print(f"Finished run {param.name}")
 
 
 def main() -> None:

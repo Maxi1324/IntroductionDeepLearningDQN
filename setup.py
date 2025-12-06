@@ -14,6 +14,9 @@ setup(
         "pyodbc",
         "psycopg2-binary",
         "swig",
-        "gymnasium[box2d]"
+        "gymnasium[box2d]",
+        "gymnasium[other]",
+        "imageio",
+        "imageio-ffmpeg"
     ],
 )
