@@ -23,3 +23,4 @@ class Parameter:
     seed: Optional[int] = None
     epsilon: Optional[float] = None
     epsilonEnd: Optional[float] = None
+    targetUpdateEvery: int = 1

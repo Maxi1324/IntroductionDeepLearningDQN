@@ -24,13 +24,29 @@ class EpsilonGreedyPolicy(Policy):
         self.epsilon_end = float(epsilon_end)
         self.rng = np.random.default_rng(seed)
 
-    def _current_epsilon(self, current_epoch: Optional[int], max_epochs: Optional[int]) -> float:
+    def _current_epsilon(
+        self,
+        current_step: Optional[int],
+        max_steps: Optional[int],
+        current_epoch: Optional[int],
+        max_epochs: Optional[int],
+    ) -> float:
+        if current_step is not None and max_steps is not None and max_steps > 0:
+            frac = min(max(current_step, 0), max_steps) / float(max_steps)
+            return self.epsilon_start + frac * (self.epsilon_end - self.epsilon_start)
         if current_epoch is None or max_epochs is None or max_epochs <= 1:
             return self.epsilon_start
         frac = min(max(current_epoch, 0), max_epochs - 1) / float(max_epochs - 1)
         return self.epsilon_start + frac * (self.epsilon_end - self.epsilon_start)
 
-    def policy(self, q_values: np.ndarray, current_epoch: Optional[int] = None, max_epochs: Optional[int] = None) -> np.ndarray:
+    def policy(
+        self,
+        q_values: np.ndarray,
+        current_step: Optional[int] = None,
+        max_steps: Optional[int] = None,
+        current_epoch: Optional[int] = None,
+        max_epochs: Optional[int] = None,
+    ) -> np.ndarray:
         q = np.asarray(q_values, dtype=np.float32, order="C")
         if q.ndim != 2:
             raise ValueError(f"Expected q_values shape (batch, actions), got {q.shape}")
@@ -38,7 +54,7 @@ class EpsilonGreedyPolicy(Policy):
         batch, num_actions = q.shape
         actions = np.argmax(q, axis=1).astype(np.int32, copy=False)
 
-        eps = self._current_epsilon(current_epoch, max_epochs)
+        eps = self._current_epsilon(current_step, max_steps, current_epoch, max_epochs)
 
         if eps <= 0.0 or num_actions == 1:
             return actions

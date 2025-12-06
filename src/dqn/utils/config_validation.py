@@ -60,6 +60,8 @@ def validate_configuration(
             fail("temperature start/end (epsilon/epsilonEnd) must be set for boltzmann policy.")
     if policy.online_predictor is None:
         fail("Policy has no OnlinePredictor attached.")
+    if getattr(p, "targetUpdateEvery", 1) <= 0:
+        fail("targetUpdateEvery must be > 0.")
 
     env_single: Optional[gym.Env[Any, Any]] = None
     try:

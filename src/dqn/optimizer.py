@@ -10,10 +10,14 @@ from dqn.networks import get_model
 
 
 class Optimizer:
-    def __init__(self, param: Parameter) -> None:
+    def __init__(self, param: Parameter, state_dim: int, action_dim: int) -> None:
         self.param: Parameter = param
 
-        self.online_network: nn.Module = get_model(param.Network)
+        self.online_network: nn.Module = get_model(
+            param.Network,
+            state_dim=state_dim,
+            action_dim=action_dim,
+        )
         self.target_network: nn.Module = copy.deepcopy(self.online_network)
 
         device = torch.device(param.Device)
@@ -48,6 +52,7 @@ class Optimizer:
 
         self._optimize.zero_grad(set_to_none=True)
         loss.backward()
+        #torch.nn.utils.clip_grad_norm_(self.online_network.parameters(), max_norm=10.0)
         self._optimize.step()
 
         return float(loss.item())

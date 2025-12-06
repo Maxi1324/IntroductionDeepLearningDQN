@@ -7,23 +7,27 @@ from typing import Iterable, Optional
 from dqn.agent import Agent
 from dqn.parameter import Parameter
 
-gl="cartpole_500"
-NETWORKS: Iterable[str] = ["mlp_medium"]
+gl = "oldschool6"
+
+
+NETWORKS: Iterable[str] = ["mlp_large"]
 POLICIES: Iterable[str] = ["epsilon_greedy"]
-EPSILONS: Iterable[Optional[float]] = [1.0]  # start epsilon / temperature
-EPSILONS_END: Iterable[Optional[float]] = [0.01]  # end epsilon / temperature
-LEARNING_RATES: Iterable[float] = [0.0005]
+
+EPSILONS: Iterable[Optional[float]] = [1.0]
+EPSILONS_END: Iterable[Optional[float]] = [0.01]
+LEARNING_RATES: Iterable[float] = [0.0001]
 DEVICES: Iterable[str] = ["cuda"]
 ENVS: Iterable[str] = ["CartPole-v1"]
-ENVS_COUNT: Iterable[int] = [8]
+ENVS_COUNT: Iterable[int] = [5]
 DISCOUNTS: Iterable[float] = [0.99]
-COLLECT_STEPS: Iterable[int] = [512]
+COLLECT_STEPS: Iterable[int] = [200]
 REPLAY_SIZES: Iterable[int] = [50_000]
-EPOCHS: Iterable[int] = [80]
-OPTIM_STEPS: Iterable[int] = [256]
-BATCH_SIZES: Iterable[int] = [64]
-PREWARMS: Iterable[int] = [8000]
-SEEDS: Iterable[Optional[int]] = [1]
+EPOCHS: Iterable[int] = [50]
+OPTIM_STEPS: Iterable[int] = [50]
+BATCH_SIZES: Iterable[int] = [256,512]
+PREWARMS: Iterable[int] = [5_000]
+SEEDS: Iterable[Optional[int]] = [1,2,3,4,5,6]
+TARGET_UPDATE_EVERY: Iterable[int] = [20]
 
 
 def build_param(
@@ -44,6 +48,7 @@ def build_param(
     batch_size: int,
     prewarm: int,
     seed: Optional[int],
+    target_update_every: int,
 ) -> Parameter:
     eps_val = epsilon if policy.lower() == "epsilon_greedy" else None
     eps_end_val = epsilon_end if policy.lower() == "epsilon_greedy" else None
@@ -69,16 +74,19 @@ def build_param(
         seed=seed,
         epsilon=eps_val,
         epsilonEnd=eps_end_val,
+        targetUpdateEvery=target_update_every,
     )
+
 
 i = 0
 def run_one(param: Parameter) -> None:
     global i
-    i +=1
+    i += 1
     print(f"Starting run {param.name}")
-    agent = Agent(param, False)
+    agent = Agent(param, True)
     agent.train()
-    print("done ",i)
+    print("done ", i)
+
 
 def main() -> None:
     combos = list(
@@ -99,6 +107,7 @@ def main() -> None:
             BATCH_SIZES,
             PREWARMS,
             SEEDS,
+            TARGET_UPDATE_EVERY,
         )
     )
     params = [

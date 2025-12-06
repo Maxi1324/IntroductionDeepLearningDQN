@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -26,7 +26,8 @@ class DataCollect:
         self.env: VectorEnv = gym.make_vec(
             env_id,
             num_envs=env_count,
-            vectorization_mode="sync"
+            vectorization_mode="sync",
+            max_episode_steps=10_000,
         )
         self.replay_buffer = replay_buffer
         self.policy = policy
@@ -37,14 +38,32 @@ class DataCollect:
         self._ep_len: NDArray[np.int32] = np.zeros(env_count, dtype=np.int32)
         self._ep_return: NDArray[np.float32] = np.zeros(env_count, dtype=np.float32)
 
-    def collect(self, num_steps: int, current_epoch: int | None = None, max_epochs: int | None = None) -> tuple[float | None, float | None]:
+    def collect(
+        self,
+        num_steps: int,
+        current_step: int | None = None,
+        max_steps: int | None = None,
+        current_epoch: int | None = None,
+        max_epochs: int | None = None,
+    ) -> tuple[float | None, float | None]:
         completed_lengths: list[int] = []
         completed_returns: list[float] = []
 
-        for _ in range(num_steps):
+        for t in range(num_steps):
             states = self._states
+            step_val: Optional[int] = None
+            if current_step is not None:
+                step_val = current_step + t * self.env_count
+                if max_steps is not None:
+                    step_val = min(step_val, max_steps)
 
-            actions = self.policy.getAction(states, current_epoch=current_epoch, max_epochs=max_epochs)
+            actions = self.policy.getAction(
+                states,
+                current_step=step_val,
+                max_steps=max_steps,
+                current_epoch=current_epoch,
+                max_epochs=max_epochs,
+            )
             next_states, rewards, terminated, truncated, _ = self.env.step(actions)
 
             next_states = next_states.astype(np.float32)
