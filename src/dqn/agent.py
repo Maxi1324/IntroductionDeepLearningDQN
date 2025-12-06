@@ -154,18 +154,4 @@ class Agent:
             self.logger._console(f"Saved model locally to {local_path}")
         except Exception as e:
             self.logger._console(f"Warning: failed to save local model: {e}")
-        # Log final model weights to MLflow
-        try:
-            if self.logger.enable_mlflow:
-                tracking_uri = mlflow.get_tracking_uri() or ""
-                if tracking_uri.startswith(("http://", "https://", "file:", "mlflow-artifacts:")):
-                        tmp_dir = Path(tempfile.mkdtemp())
-                        model_path = tmp_dir / "model.pt"
-                        torch.save(self.optimizer.getOnlineNetwork().state_dict(), model_path)
-                        mlflow.log_artifact(str(model_path), artifact_path="model")
-                    else:
-                        self.logger._console(
-                            f"Skipping model artifact logging: tracking URI '{tracking_uri}' does not support artifacts."
-                        )
-            except Exception as e:
-                self.logger._console(f"Warning: failed to log model artifact: {e}")
+        
